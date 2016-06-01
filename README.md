@@ -1,0 +1,1 @@
+A simple library for indexing Go objects
