@@ -42,7 +42,8 @@ func (in *Index) Add(element IndexElement) {
 		if element.Less(index) {
 			location = key
 		} else {
-			in.keys = append(in.keys[:location], element, in.keys[key:]...)
+			before := append(in.keys[:location], element)
+			in.keys = append(before, in.keys[key:]...)
 			return
 		}
 	}
