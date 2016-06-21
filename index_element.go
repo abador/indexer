@@ -1,9 +1,9 @@
 package indexer
 
-// Index is a single index.
+// IndexElement is a single index element.
 type IndexElement interface {
-	Key() interface{}
-	Less(element IndexElement) bool
+	Less(element IndexElement) (bool, error)
+	Equal(element IndexElement) (bool, error)
 }
 
-
+type Less func(e1, e2 IndexElement) bool
