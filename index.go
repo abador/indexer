@@ -11,14 +11,19 @@ type Index struct {
 	keys []IndexElement
 	m    sync.RWMutex
 	t    reflect.Type
+	less []Less
 }
 
+//Less defines a single less function for sorting.
+type Less func(e1, e2 IndexElement) (bool, error)
+
 //NewIndex creates an Index instance
-func NewIndex(t reflect.Type) *Index {
-	index := new(Index)
-	index.keys = []IndexElement{}
-	index.t = t
-	return index
+func NewIndex(t reflect.Type, l ...Less) *Index {
+	return &Index{
+		keys: []IndexElement{},
+		t: t,
+		less: l,
+	}
 }
 
 //Len returns length of the index
@@ -28,7 +33,28 @@ func (in *Index) Len() int {
 
 //Less compares values
 func (in *Index) Less(i, j int) (bool, error) {
-	return in.keys[i].Less(in.keys[j])
+	less := false
+	for _,l := range in.less {
+		isLess, error := l(in.keys[i], in.keys[j])
+		less = less && isLess
+		if nil != error {
+			return less, error
+		}
+	}
+	return less, nil
+}
+
+//IsLess compares elements
+func (in *Index) IsLess(e1, e2 IndexElement) (bool, error) {
+	less := false
+	for _,l := range in.less {
+		isLess, error := l(e1, e2)
+		less = isLess
+		if nil != error {
+			return less, error
+		}
+	}
+	return less, nil
 }
 
 //Swap swaps IndexElements in list
@@ -45,7 +71,7 @@ func (in *Index) Add(element IndexElement) error {
 	}
 	location := 0
 	for key, index := range in.keys {
-		if less, error := element.Less(index); less || nil != error {
+		if less, error := in.IsLess(element, index); less || nil != error {
 			if nil != error {
 				return error
 			}
@@ -67,10 +93,7 @@ func (in *Index) Remove(element IndexElement) error {
 	in.m.Lock()
 	defer in.m.Unlock()
 	for key, index := range in.keys {
-		if equal, error := element.Equal(index); equal || nil != error {
-			if nil != error {
-				return error
-			}
+		if element.Equal(index) {
 			in.keys = append(in.keys[:key], in.keys[key+1:]...)
 			return nil
 		}

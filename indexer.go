@@ -20,7 +20,7 @@ func NewIndexer() *Indexer {
 }
 
 //CreateIndex adds an index. If you want to know how to get a type read tests .
-func (in *Indexer) CreateIndex(name string, t reflect.Type) *Index{
+func (in *Indexer) CreateIndex(name string, t reflect.Type, l ...Less) *Index{
 	in.m.RLock()
 	if index, ok := in.indexes[name]; ok {
 		in.m.RUnlock()
@@ -28,7 +28,7 @@ func (in *Indexer) CreateIndex(name string, t reflect.Type) *Index{
 	}
 	in.m.RUnlock()
 	in.m.Lock()
-	in.indexes[name] = NewIndex(t)
+	in.indexes[name] = NewIndex(t, l...)
 	in.m.Unlock()
 	in.m.RLock()
 	defer in.m.RUnlock()

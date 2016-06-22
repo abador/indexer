@@ -7,8 +7,12 @@ import (
 )
 
 func TestIndexDescendingStringSorting(t *testing.T) {
-
-	index := NewIndex(reflect.TypeOf((*StringDescendingIndexElement)(nil)))
+	descending := func(e1, e2 IndexElement) (bool, error) {
+		s1 := e1.Value().(string)
+		s2 := e2.Value().(string)
+		return len(s1) < len(s2), nil
+	}
+	index := NewIndex(reflect.TypeOf((*StringDescendingIndexElement)(nil)), descending)
 	indexElements := []IndexElement{}
 	indexElement3 := new(StringDescendingIndexElement)
 	indexElement3.SetKey("333")
@@ -31,7 +35,7 @@ func TestIndexDescendingStringSorting(t *testing.T) {
 	indexElements = append(indexElements, indexElement2)
 	indexElements = append(indexElements, indexElement)
 	for key, in := range index.Keys() {
-		equal, _ := in.Equal(indexElements[key])
+		equal := in.Equal(indexElements[key])
 		t.Logf("%v - %v", in, indexElements[key])
 		assert.True(t,equal)
 	}
@@ -39,7 +43,12 @@ func TestIndexDescendingStringSorting(t *testing.T) {
 }
 
 func TestIndexDescendingIntSorting(t *testing.T) {
-	index := NewIndex(reflect.TypeOf((*IntIndexElement)(nil)))
+	descending := func(e1, e2 IndexElement) (bool, error) {
+		s1 := e1.Value().(int)
+		s2 := e2.Value().(int)
+		return s1 < s2, nil
+	}
+	index := NewIndex(reflect.TypeOf((*IntIndexElement)(nil)), descending)
 	indexElements := []IndexElement{}
 	indexElement3 := new(IntIndexElement)
 	indexElement3.SetKey(3)
@@ -62,7 +71,7 @@ func TestIndexDescendingIntSorting(t *testing.T) {
 	indexElements = append(indexElements, indexElement2)
 	indexElements = append(indexElements, indexElement)
 	for key, in := range index.Keys() {
-		equal, _ := in.Equal(indexElements[key])
+		equal := in.Equal(indexElements[key])
 		t.Logf("%v - %v", in, indexElements[key])
 		assert.True(t,equal)
 	}

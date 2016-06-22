@@ -1,20 +1,16 @@
 package indexer
 
-import (
-	"fmt"
-)
-
 // IntIndexElement is a single index for test and example purposes.
 type IntIndexElement struct {
 	key int
 	value int
 }
 
-func (sie *IntIndexElement) Key() int {
+func (sie *IntIndexElement) Key() interface{} {
 	return sie.key
 }
 
-func (sie *IntIndexElement) Value() int {
+func (sie *IntIndexElement) Value() interface{} {
 	return sie.value
 }
 
@@ -26,17 +22,7 @@ func (sie *IntIndexElement) SetValue(value int) {
 	sie.value = value
 }
 
-func (sie *IntIndexElement) Less(element IndexElement) (bool, error) {
-	if e, ok := element.(*IntIndexElement); ok {
-		return sie.Value() < e.Value(), nil
-	}
-	return false, fmt.Errorf("element is not assertable to IntIndexElement")
-}
-
-func (sie *IntIndexElement) Equal(element IndexElement) (bool, error) {
-	if e, ok := element.(*IntIndexElement); ok {
-		return sie.Value() == e.Value(), nil
-	}
-	return false, fmt.Errorf("element is not assertable to IntIndexElement")
+func (sie *IntIndexElement) Equal(element IndexElement) bool {
+	return sie.Value() == element.Value()
 }
 
