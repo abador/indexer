@@ -36,7 +36,6 @@ func TestIndexDescendingStringSorting(t *testing.T) {
 	indexElements = append(indexElements, indexElement)
 	for key, in := range index.Keys() {
 		equal := in.Equal(indexElements[key])
-		t.Logf("%v - %v", in, indexElements[key])
 		assert.True(t,equal)
 	}
 
@@ -72,8 +71,42 @@ func TestIndexDescendingIntSorting(t *testing.T) {
 	indexElements = append(indexElements, indexElement)
 	for key, in := range index.Keys() {
 		equal := in.Equal(indexElements[key])
-		t.Logf("%v - %v", in, indexElements[key])
 		assert.True(t,equal)
 	}
+
+}
+
+func TestAddAndDeleteIndexElement(t *testing.T) {
+	descending := func(e1, e2 IndexElement) (bool, error) {
+		s1 := e1.Value().(int)
+		s2 := e2.Value().(int)
+		return s1 < s2, nil
+	}
+	index := NewIndex(reflect.TypeOf((*IntIndexElement)(nil)), descending)
+	indexElements := []IndexElement{}
+	indexElement3 := new(IntIndexElement)
+	indexElement3.SetKey(3)
+	indexElement3.SetValue(3)
+	indexElements = append(indexElements, indexElement3)
+	index.Add(indexElement3)
+	indexElement := new(IntIndexElement)
+	indexElement.SetKey(1)
+	indexElement.SetValue(1)
+	index.Add(indexElement)
+	indexElements = append(indexElements, indexElement)
+	for key, in := range index.Keys() {
+		equal := in.Equal(indexElements[key])
+		assert.True(t,equal)
+	}
+	index.Remove(indexElement3)
+	for key, in := range index.Keys()[1:] {
+		equal := in.Equal(indexElements[key])
+		assert.True(t,equal)
+	}
+	index.Remove(indexElement)
+	assert.Empty(t,index.Keys())
+	index.Add(indexElement)
+	index.Add(indexElement3)
+
 
 }

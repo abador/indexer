@@ -77,7 +77,7 @@ func (in *Index) Add(element IndexElement) error {
 			}
 			location = key
 		} else {
-			after := make([]IndexElement, len(in.keys), 2*cap(in.keys))
+			after := make([]IndexElement, len(in.keys[location:]), 2*cap(in.keys[location:]))
 			copy(after, in.keys[location:])
 			in.keys = append(in.keys[:location], element)
 			in.keys = append(in.keys, after...)
@@ -94,7 +94,9 @@ func (in *Index) Remove(element IndexElement) error {
 	defer in.m.Unlock()
 	for key, index := range in.keys {
 		if element.Equal(index) {
-			in.keys = append(in.keys[:key], in.keys[key+1:]...)
+			keys := make([]IndexElement, len(in.keys) -1)
+			keys = append(in.keys[:key], in.keys[key+1:]...)
+			in.keys = keys
 			return nil
 		}
 	}
