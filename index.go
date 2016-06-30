@@ -1,9 +1,9 @@
 package indexer
 
 import (
-	"sync"
 	"fmt"
 	"reflect"
+	"sync"
 )
 
 // Index is a single index.
@@ -21,7 +21,7 @@ type Less func(e1, e2 IndexElement) (bool, error)
 func NewIndex(t reflect.Type, l ...Less) *Index {
 	return &Index{
 		keys: []IndexElement{},
-		t: t,
+		t:    t,
 		less: l,
 	}
 }
@@ -34,7 +34,7 @@ func (in *Index) Len() int {
 //Less compares values
 func (in *Index) Less(i, j int) (bool, error) {
 	less := false
-	for _,l := range in.less {
+	for _, l := range in.less {
 		isLess, error := l(in.keys[i], in.keys[j])
 		less = less && isLess
 		if nil != error {
@@ -47,7 +47,7 @@ func (in *Index) Less(i, j int) (bool, error) {
 //IsLess compares elements
 func (in *Index) IsLess(e1, e2 IndexElement) (bool, error) {
 	less := false
-	for _,l := range in.less {
+	for _, l := range in.less {
 		isLess, error := l(e1, e2)
 		less = isLess
 		if nil != error {
@@ -66,6 +66,52 @@ func (in *Index) Swap(i, j int) {
 func (in *Index) Add(element IndexElement) error {
 	in.m.Lock()
 	defer in.m.Unlock()
+	return in.addElement(element)
+}
+
+//Remove deletes a single IndexElement
+func (in *Index) Remove(element IndexElement) error {
+	in.m.Lock()
+	defer in.m.Unlock()
+	for key, index := range in.keys {
+		if element.Equal(index) {
+			keys := make([]IndexElement, len(in.keys)-1)
+			keys = append(in.keys[:key], in.keys[key+1:]...)
+			in.keys = keys
+			return nil
+		}
+	}
+	return fmt.Errorf("No key found")
+}
+
+//Keys returns index keys slice.
+func (in *Index) Keys() []IndexElement {
+	keys := make([]IndexElement, len(in.keys))
+	in.m.RLock()
+	defer in.m.RUnlock()
+	copy(keys, in.keys)
+	return keys
+}
+
+//ModifyLess changes the less functions.
+func (in *Index) ModifyLess(l ...Less) error {
+	in.m.Lock()
+	defer in.m.Unlock()
+	in.less = l
+	keyCopy := make([]IndexElement, len(in.keys))
+	copy(keyCopy, in.keys)
+	in.keys = make([]IndexElement, 0)
+	for _, element := range keyCopy {
+		error := in.addElement(element)
+		if error != nil {
+			return error
+		}
+	}
+	return nil
+}
+
+//addElement adds a single IndexElement without a lock
+func (in *Index) addElement(element IndexElement) error {
 	if !reflect.TypeOf(element).ConvertibleTo(in.t) {
 		return fmt.Errorf("Type %v is not convertible to type %v", reflect.TypeOf(element).Name(), in.t.Name())
 	}
@@ -86,28 +132,4 @@ func (in *Index) Add(element IndexElement) error {
 	}
 	in.keys = append(in.keys, element)
 	return nil
-}
-
-//Remove deletes a single IndexElement
-func (in *Index) Remove(element IndexElement) error {
-	in.m.Lock()
-	defer in.m.Unlock()
-	for key, index := range in.keys {
-		if element.Equal(index) {
-			keys := make([]IndexElement, len(in.keys) -1)
-			keys = append(in.keys[:key], in.keys[key+1:]...)
-			in.keys = keys
-			return nil
-		}
-	}
-	return fmt.Errorf("No key found")
-}
-
-//Keys returns index keys slice.
-func (in *Index) Keys() []IndexElement{
-	keys := make([]IndexElement, len(in.keys))
-	in.m.RLock()
-	defer in.m.RUnlock()
-	copy(keys, in.keys)
-	return keys
 }
