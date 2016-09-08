@@ -9,6 +9,7 @@ import (
 // Index is a single index.
 type Index struct {
 	keys []IndexElement
+	position map[interface{}]int
 	m    sync.RWMutex
 	t    reflect.Type
 	less []Less
@@ -21,6 +22,7 @@ type Less func(e1, e2 IndexElement) (bool, error)
 func NewIndex(t reflect.Type, l ...Less) *Index {
 	return &Index{
 		keys: []IndexElement{},
+		position: make(map[interface{}]int, 0),
 		t:    t,
 		less: l,
 	}
@@ -73,13 +75,12 @@ func (in *Index) Add(element IndexElement) error {
 func (in *Index) Remove(element IndexElement) error {
 	in.m.Lock()
 	defer in.m.Unlock()
-	for key, index := range in.keys {
-		if element.Equal(index) {
-			keys := make([]IndexElement, len(in.keys)-1)
-			keys = append(in.keys[:key], in.keys[key+1:]...)
-			in.keys = keys
-			return nil
-		}
+	if key, ok := in.position[element.Key()]; ok {
+		keys := make([]IndexElement, len(in.keys)-1)
+		keys = append(in.keys[:key], in.keys[key+1:]...)
+		in.keys = keys
+		delete(in.position, element.Key())
+		return nil
 	}
 	return fmt.Errorf("No key found")
 }
@@ -127,6 +128,7 @@ func (in *Index) addElement(element IndexElement) error {
 			copy(after, in.keys[location:])
 			in.keys = append(in.keys[:location], element)
 			in.keys = append(in.keys, after...)
+			in.position[element.Key()] = location
 			return nil
 		}
 	}
