@@ -161,7 +161,7 @@ func (in *Index) addElement(element IndexElement) error {
 	}
 
 	if -1 == location {
-		location = in.findInArea(element, 0, len(in.keys))
+		location = in.findInArea(element, 0, len(in.keys)-1)
 	}
 	after := make([]IndexElement, len(in.keys[location:]), 2*cap(in.keys[location:]))
 	copy(after, in.keys[location:])
