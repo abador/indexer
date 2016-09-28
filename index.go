@@ -90,7 +90,7 @@ func (in *Index) Remove(element IndexElement) error {
 		location = 0
 	}
 	if -1 == location {
-		location = in.findElement(element, 0, len(in.keys))
+		location = in.findElement(element, 0, len(in.keys)-1)
 	}
 	if -1 == location {
 		return fmt.Errorf("No key found")
