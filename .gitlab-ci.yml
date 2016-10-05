@@ -1,4 +1,8 @@
 image: golang:1.6
+variables:
+        GROUP_NAME: "abador"
+        APP_NAME: "indexer"
+        PROJECT_REPO: "git@github.com:abador/indexer.git"
 stages:
   - build
   - test
@@ -6,14 +10,8 @@ stages:
 build-my-project:
   stage: build
   script:
-    - cd $CURRENT_BUILD_PATH
+    - cd /builds/$GROUP_NAME/$APP_NAME
     - go build
-
-test-my-project:
-  image: golang:1.6
-  stage: test
-  script:
-    - cd $CURRENT_BUILD_PATH
     - go test -v ./...
     - go test -race  -i ./...
     - golint ./... && test -z "`golint ./...`"
