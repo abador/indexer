@@ -185,13 +185,11 @@ func (in *Index) findInArea(element IndexElement, top, bottom int) int {
 			return bottom
 		}
 		return in.findInArea(element, middle, bottom)
-	} else {
-		if 1 == bottom-top {
-			return top
-		}
-		return in.findInArea(element, top, middle)
 	}
-	return -1
+	if 1 == bottom-top {
+		return top
+	}
+	return in.findInArea(element, top, middle)
 }
 
 //findElement finds an element
@@ -220,15 +218,13 @@ func (in *Index) findElement(element IndexElement, top, bottom int) int {
 			return -1
 		}
 		return in.findElement(element, middle, bottom)
-	} else {
-		if 1 == bottom-top {
-			el := in.keys[top]
-			if element.Equal(el) {
-				return top
-			}
-			return -1
-		}
-		return in.findElement(element, top, middle)
 	}
-	return -1
+	if 1 == bottom-top {
+		el := in.keys[top]
+		if element.Equal(el) {
+			return top
+		}
+		return -1
+	}
+	return in.findElement(element, top, middle)
 }
