@@ -11,6 +11,9 @@ build-my-project:
   stage: build
   script:
     - cd /builds/$GROUP_NAME/$APP_NAME
+    - go get github.com/golang/lint/golint
+    - go get golang.org/x/tools/cmd/goimports
+    - go get -t -v ./...
     - go build
     - go test -v ./...
     - go test -race  -i ./...
