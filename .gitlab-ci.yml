@@ -10,7 +10,9 @@ stages:
 build-my-project:
   stage: build
   script:
-    - cd /builds/$GROUP_NAME/$APP_NAME
+    - mkdir -p $GOPATH/src/github.com/$GROUP_NAME
+    - cp -r /builds/$GROUP_NAME/$APP_NAME $GOPATH/src/github.com/$GROUP_NAME/
+    - cd $GOPATH/src/github.com/$GROUP_NAME/$APP_NAME
     - go get github.com/golang/lint/golint
     - go get golang.org/x/tools/cmd/goimports
     - go get -t -v ./...
