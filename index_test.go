@@ -12,7 +12,6 @@ func TestRemoveNotExistingIndex(t *testing.T) {
 	descending := func(e1, e2 IndexElement) (bool, error) {
 		s1 := e1.Value().(string)
 		s2 := e2.Value().(string)
-		//fmt.Printf("%v<%v\n", len(s1), len(s2))
 		return len(s1) < len(s2), nil
 	}
 	index := NewIndex(reflect.TypeOf((*StringDescendingIndexElement)(nil)), descending)
@@ -31,7 +30,6 @@ func TestIndexDescendingStringSorting(t *testing.T) {
 	descending := func(e1, e2 IndexElement) (bool, error) {
 		s1 := e1.Value().(string)
 		s2 := e2.Value().(string)
-		//fmt.Printf("%v<%v\n", len(s1), len(s2))
 		return len(s1) < len(s2), nil
 	}
 	index := NewIndex(reflect.TypeOf((*StringDescendingIndexElement)(nil)), descending)
