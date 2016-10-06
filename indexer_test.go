@@ -1,14 +1,16 @@
 package indexer
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
 	"reflect"
+	"testing"
 )
+
 const (
-	testName = "test"
+	testName      = "test"
 	testNameError = "error"
 )
+
 func TestIndexerInitOk(t *testing.T) {
 
 	indexer := NewIndexer()
