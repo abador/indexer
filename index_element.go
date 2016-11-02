@@ -6,4 +6,3 @@ type IndexElement interface {
 	Value() interface{}
 	Equal(element IndexElement) bool
 }
-

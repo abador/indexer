@@ -29,38 +29,9 @@ func NewIndex(t reflect.Type, l ...Less) *Index {
 
 //Len returns length of the index
 func (in *Index) Len() int {
+	in.m.RLock()
+	defer in.m.RUnlock()
 	return len(in.keys)
-}
-
-//Less compares values
-func (in *Index) Less(i, j int) (bool, error) {
-	less := false
-	for _, l := range in.less {
-		isLess, error := l(in.keys[i], in.keys[j])
-		less = less && isLess
-		if nil != error {
-			return less, error
-		}
-	}
-	return less, nil
-}
-
-//IsLess compares elements
-func (in *Index) IsLess(e1, e2 IndexElement) (bool, error) {
-	less := false
-	for _, l := range in.less {
-		isLess, error := l(e1, e2)
-		less = isLess
-		if nil != error {
-			return less, error
-		}
-	}
-	return less, nil
-}
-
-//Swap swaps IndexElements in list
-func (in *Index) Swap(i, j int) {
-	in.keys[i], in.keys[j] = in.keys[j], in.keys[i]
 }
 
 //Add adds a single IndexElement
@@ -73,8 +44,8 @@ func (in *Index) Add(element IndexElement) error {
 
 //Remove deletes a single IndexElement
 func (in *Index) Remove(element IndexElement) error {
-	if 0 == len(in.keys) {
-		return fmt.Errorf("No key found")
+	if 0 == in.Len() {
+		return fmt.Errorf("There are no elements in index")
 	}
 	in.m.Lock()
 	defer in.m.Unlock()
@@ -85,20 +56,16 @@ func (in *Index) Remove(element IndexElement) error {
 			location = len(in.keys) - 1
 		}
 	}
-	maxElement := in.keys[0]
-	if maxElement.Equal(element) {
-		location = 0
+	if -1 == location {
+		if in.keys[0].Equal(element) {
+			location = 0
+		}
 	}
 	if -1 == location {
-		location = in.findElement(element, 0, len(in.keys)-1)
+		location = in.findInArea(element, 0, len(in.keys)-1)
 	}
 	if -1 == location {
 		return fmt.Errorf("No key found")
-	}
-	if -1 != location {
-		if !in.keys[location].Equal(element) {
-			return fmt.Errorf("Wrong key found")
-		}
 	}
 	keys := make([]IndexElement, len(in.keys)-1)
 	keys = append(in.keys[:location], in.keys[location+1:]...)
@@ -125,10 +92,7 @@ func (in *Index) ModifyLess(l ...Less) error {
 	copy(keyCopy, in.keys)
 	in.keys = make([]IndexElement, 0)
 	for _, element := range keyCopy {
-		error := in.addElement(element)
-		if error != nil {
-			return error
-		}
+		in.addElement(element)
 	}
 	return nil
 }
@@ -145,23 +109,14 @@ func (in *Index) addElement(element IndexElement) error {
 	location := -1
 	minElement := in.keys[len(in.keys)-1]
 	maxElement := in.keys[0]
-	if less, error := in.IsLess(maxElement, element); less || nil != error {
-		if nil != error {
-			return error
-		}
+	if less, _ := in.isLess(maxElement, element); less {
 		location = 0
-	} else if less, error := in.IsLess(element, minElement); less || nil != error {
-		if nil != error {
-			return error
-		}
+	} else if less, _ := in.isLess(element, minElement); less {
 		in.keys = append(in.keys, element)
-
 		return nil
-
 	}
-
 	if -1 == location {
-		location = in.findInArea(element, 0, len(in.keys)-1)
+		location = in.placeInArea(element, 0, len(in.keys)-1)
 	}
 	after := make([]IndexElement, len(in.keys[location:]), 2*cap(in.keys[location:]))
 	copy(after, in.keys[location:])
@@ -170,61 +125,62 @@ func (in *Index) addElement(element IndexElement) error {
 	return nil
 }
 
-//findInArea finds in area
-func (in *Index) findInArea(element IndexElement, top, bottom int) int {
+//placeInArea finds a place for element in area
+func (in *Index) placeInArea(element IndexElement, top, bottom int) int {
 	if 0 == top && 0 == bottom {
 		return 0
 	}
 	middle := int(math.Ceil(float64((top + bottom) / 2)))
 	middleElement := in.keys[middle]
-	if less, error := in.IsLess(element, middleElement); less || nil != error {
-		if nil != error {
-			return -1
-		}
+	if less, _ := in.isLess(element, middleElement); less {
 		if 1 == bottom-top {
 			return bottom
 		}
-		return in.findInArea(element, middle, bottom)
+		return in.placeInArea(element, middle, bottom)
 	}
 	if 1 == bottom-top {
 		return top
 	}
-	return in.findInArea(element, top, middle)
+	return in.placeInArea(element, top, middle)
 }
 
-//findElement finds an element
-func (in *Index) findElement(element IndexElement, top, bottom int) int {
-	if 0 == top && 0 == bottom {
-		el := in.keys[0]
-		if element.Equal(el) {
-			return 0
-		}
-		return -1
-	}
-	middle := int(math.Ceil(float64((top + bottom) / 2)))
-	middleElement := in.keys[middle]
-	if element.Equal(middleElement) {
-		return middle
-	}
-	if less, error := in.IsLess(element, middleElement); less || nil != error {
-		if nil != error {
-			return top
-		}
-		if 1 == bottom-top {
-			el := in.keys[bottom]
-			if element.Equal(el) {
-				return bottom
-			}
-			return -1
-		}
-		return in.findElement(element, middle, bottom)
-	}
-	if 1 == bottom-top {
+//findInArea finds an element in the area
+func (in *Index) findInArea(element IndexElement, top, bottom int) int {
+	if top == bottom {
 		el := in.keys[top]
 		if element.Equal(el) {
 			return top
 		}
 		return -1
 	}
-	return in.findElement(element, top, middle)
+	middle := int(math.Floor(float64((top + bottom) / 2)))
+	if middle == top {
+		return in.findInArea(element, middle, top)
+	}
+	if middle == bottom {
+		return in.findInArea(element, middle, bottom)
+	}
+	middleElement := in.keys[middle]
+	if element.Equal(middleElement) {
+		return middle
+	}
+	if less, _ := in.isLess(element, middleElement); less {
+		return in.findInArea(element, middle, bottom)
+	}
+	return in.findInArea(element, top, middle)
+}
+
+//isLess compares elements
+func (in *Index) isLess(e1, e2 IndexElement) (bool, error) {
+	less := false
+	for _, l := range in.less {
+		isLess, _ := l(e1, e2)
+		less = isLess
+	}
+	return less, nil
+}
+
+//swap swaps IndexElements in list
+func (in *Index) swap(i, j int) {
+	in.keys[i], in.keys[j] = in.keys[j], in.keys[i]
 }

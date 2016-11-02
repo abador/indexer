@@ -1,5 +1,7 @@
 package indexer
 
+import "github.com/abador/indexer"
+
 // IntIndexElement is a single index for test and example purposes.
 type IntIndexElement struct {
 	key   int
@@ -27,6 +29,6 @@ func (sie *IntIndexElement) SetValue(value int) {
 }
 
 //Equal returns if element are equal
-func (sie *IntIndexElement) Equal(element IndexElement) bool {
+func (sie *IntIndexElement) Equal(element indexer.IndexElement) bool {
 	return sie.Value() == element.Value()
 }

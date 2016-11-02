@@ -1,5 +1,7 @@
 package indexer
 
+import "github.com/abador/indexer"
+
 // UniversalIndexElement is a single index element.
 type UniversalIndexElement struct {
 	key   interface{}
@@ -35,6 +37,6 @@ func (uie *UniversalIndexElement) SetValue(value interface{}) {
 }
 
 //Equal returns if element are equal
-func (uie *UniversalIndexElement) Equal(element IndexElement) bool {
+func (uie *UniversalIndexElement) Equal(element indexer.IndexElement) bool {
 	return uie.key == element.Key() && uie.value == element.Value()
 }
