@@ -2,7 +2,7 @@ package indexer
 
 import "github.com/abador/indexer"
 
-// StringDescendingIndexElement is a single index for test and example purposes.
+// StringIndexElement is a single index for test and example purposes.
 type StringIndexElement struct {
 	key   string
 	value string
