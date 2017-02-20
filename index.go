@@ -62,10 +62,14 @@ func (in *Index) Remove(element IndexElement) error {
 		}
 	}
 	if -1 == location {
-		location = in.findInArea(element, 0, len(in.keys)-1)
+		loc, err := in.findInArea(element, 0, len(in.keys)-1)
+		if nil != err {
+			return err
+		}
+		location = loc
 	}
 	if -1 == location {
-		return fmt.Errorf("No key found")
+		return fmt.Errorf("No key %v: %v found", element.Key(), element.Value())
 	}
 	keys := make([]IndexElement, len(in.keys)-1)
 	keys = append(in.keys[:location], in.keys[location+1:]...)
@@ -145,13 +149,13 @@ func (in *Index) placeInArea(element IndexElement, top, bottom int) int {
 }
 
 //findInArea finds an element in the area
-func (in *Index) findInArea(element IndexElement, top, bottom int) int {
+func (in *Index) findInArea(element IndexElement, top, bottom int) (int, error) {
 	if top == bottom {
 		el := in.keys[top]
 		if element.Equal(el) {
-			return top
+			return top, nil
 		}
-		return -1
+		return -1, nil
 	}
 	middle := int(math.Floor(float64((top + bottom) / 2)))
 	if middle == top {
@@ -162,9 +166,13 @@ func (in *Index) findInArea(element IndexElement, top, bottom int) int {
 	}
 	middleElement := in.keys[middle]
 	if element.Equal(middleElement) {
-		return middle
+		return middle, nil
 	}
-	if less, _ := in.isLess(element, middleElement); less {
+	less, err := in.isLess(element, middleElement)
+	if nil != err {
+		return -1, err
+	}
+	if less {
 		return in.findInArea(element, middle, bottom)
 	}
 	return in.findInArea(element, top, middle)
