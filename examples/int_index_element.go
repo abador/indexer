@@ -1,4 +1,4 @@
-package indexer
+package examples
 
 import "github.com/abador/indexer"
 
@@ -6,6 +6,13 @@ import "github.com/abador/indexer"
 type IntIndexElement struct {
 	key   int
 	value int
+}
+
+func NewIntIndexElement(key, val int) *IntIndexElement {
+	element := new(IntIndexElement)
+	element.key = key
+	element.value = val
+	return element
 }
 
 //Key returns an index element key

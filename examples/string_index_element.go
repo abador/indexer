@@ -1,4 +1,4 @@
-package indexer
+package examples
 
 import "github.com/abador/indexer"
 

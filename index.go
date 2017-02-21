@@ -44,17 +44,16 @@ func (in *Index) Add(element IndexElement) error {
 
 //Remove deletes a single IndexElement
 func (in *Index) Remove(element IndexElement) error {
-	if 0 == in.Len() {
-		return fmt.Errorf("There are no elements in index")
-	}
 	in.m.Lock()
 	defer in.m.Unlock()
+	if 0 == len(in.keys) {
+		return fmt.Errorf("There are no elements in index")
+	}
 	location := -1
-	if 0 < len(in.keys)-1 {
-		minElement := in.keys[len(in.keys)-1]
-		if minElement.Equal(element) {
-			location = len(in.keys) - 1
-		}
+	min := len(in.keys)-1
+	minElement := in.keys[min]
+	if minElement.Equal(element) {
+		location = min
 	}
 	if -1 == location {
 		if in.keys[0].Equal(element) {
@@ -62,7 +61,7 @@ func (in *Index) Remove(element IndexElement) error {
 		}
 	}
 	if -1 == location {
-		loc, err := in.findInArea(element, 0, len(in.keys)-1)
+		loc, err := in.findInArea(element, 0, min)
 		if nil != err {
 			return err
 		}
@@ -71,7 +70,7 @@ func (in *Index) Remove(element IndexElement) error {
 	if -1 == location {
 		return fmt.Errorf("No key %v: %v found", element.Key(), element.Value())
 	}
-	keys := make([]IndexElement, len(in.keys)-1)
+	keys := make([]IndexElement, min)
 	keys = append(in.keys[:location], in.keys[location+1:]...)
 	in.keys = keys
 	return nil
@@ -111,11 +110,11 @@ func (in *Index) addElement(element IndexElement) error {
 		return nil
 	}
 	location := -1
-	minElement := in.keys[len(in.keys)-1]
-	maxElement := in.keys[0]
-	if less, _ := in.isLess(maxElement, element); less {
+	bottomElement := in.keys[len(in.keys)-1]
+	topElement := in.keys[0]
+	if less, _ := in.isHigher(topElement, element); less {
 		location = 0
-	} else if less, _ := in.isLess(element, minElement); less {
+	} else if less, _ := in.isHigher(element, bottomElement); less {
 		in.keys = append(in.keys, element)
 		return nil
 	}
@@ -136,7 +135,7 @@ func (in *Index) placeInArea(element IndexElement, top, bottom int) int {
 	}
 	middle := int(math.Ceil(float64((top + bottom) / 2)))
 	middleElement := in.keys[middle]
-	if less, _ := in.isLess(element, middleElement); less {
+	if less, _ := in.isHigher(element, middleElement); less {
 		if 1 == bottom-top {
 			return bottom
 		}
@@ -168,7 +167,7 @@ func (in *Index) findInArea(element IndexElement, top, bottom int) (int, error) 
 	if element.Equal(middleElement) {
 		return middle, nil
 	}
-	less, err := in.isLess(element, middleElement)
+	less, err := in.isHigher(element, middleElement)
 	if nil != err {
 		return -1, err
 	}
@@ -178,8 +177,8 @@ func (in *Index) findInArea(element IndexElement, top, bottom int) (int, error) 
 	return in.findInArea(element, top, middle)
 }
 
-//isLess compares elements
-func (in *Index) isLess(e1, e2 IndexElement) (bool, error) {
+//isHigher returns if the first elemet should be higher than the second one
+func (in *Index) isHigher(e1, e2 IndexElement) (bool, error) {
 	less := false
 	for _, l := range in.less {
 		isLess, _ := l(e1, e2)

@@ -21,18 +21,24 @@ func NewIndexer() *Indexer {
 
 //CreateIndex adds an index. If you want to know how to get a type read tests .
 func (in *Indexer) CreateIndex(name string, t reflect.Type, l ...Less) (*Index, error) {
-	in.m.RLock()
-	if index, ok := in.indexes[name]; ok {
-		in.m.RUnlock()
+	index, err := in.GetIndex(name)
+	if nil == err {
 		return index, fmt.Errorf("Index %v already exists", name)
 	}
-	in.m.RUnlock()
 	in.m.Lock()
+	defer in.m.Unlock()
 	in.indexes[name] = NewIndex(t, l...)
-	in.m.Unlock()
+	return in.indexes[name], nil
+}
+
+//GetIndex gets an index. If you want to know how to get a type read tests .
+func (in *Indexer) GetIndex(name string) (*Index, error) {
 	in.m.RLock()
 	defer in.m.RUnlock()
-	return in.indexes[name], nil
+	if index, ok := in.indexes[name]; ok {
+		return index, nil
+	}
+	return nil, fmt.Errorf("Index %v doesn't exist", name)
 }
 
 //DeleteIndex removes an index.
