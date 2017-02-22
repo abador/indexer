@@ -112,9 +112,9 @@ func (in *Index) addElement(element IndexElement) error {
 	location := -1
 	bottomElement := in.keys[len(in.keys)-1]
 	topElement := in.keys[0]
-	if less, _ := in.isHigher(topElement, element); less {
+	if less, _ := in.isLess(topElement, element); less {
 		location = 0
-	} else if less, _ := in.isHigher(element, bottomElement); less {
+	} else if less, _ := in.isLess(element, bottomElement); less {
 		in.keys = append(in.keys, element)
 		return nil
 	}
@@ -135,7 +135,7 @@ func (in *Index) placeInArea(element IndexElement, top, bottom int) int {
 	}
 	middle := int(math.Ceil(float64((top + bottom) / 2)))
 	middleElement := in.keys[middle]
-	if less, _ := in.isHigher(element, middleElement); less {
+	if less, _ := in.isLess(element, middleElement); less {
 		if 1 == bottom-top {
 			return bottom
 		}
@@ -149,36 +149,30 @@ func (in *Index) placeInArea(element IndexElement, top, bottom int) int {
 
 //findInArea finds an element in the area
 func (in *Index) findInArea(element IndexElement, top, bottom int) (int, error) {
-	if top == bottom {
-		el := in.keys[top]
+	middle := int(math.Floor(float64((top + bottom) / 2)))
+	if middle == top || middle == bottom {
+		el := in.keys[middle]
 		if element.Equal(el) {
-			return top, nil
+			return middle, nil
 		}
 		return -1, nil
-	}
-	middle := int(math.Floor(float64((top + bottom) / 2)))
-	if middle == top {
-		return in.findInArea(element, middle, top)
-	}
-	if middle == bottom {
-		return in.findInArea(element, middle, bottom)
 	}
 	middleElement := in.keys[middle]
 	if element.Equal(middleElement) {
 		return middle, nil
 	}
-	less, err := in.isHigher(element, middleElement)
+	lower, err := in.isLess(element, middleElement)
 	if nil != err {
 		return -1, err
 	}
-	if less {
+	if lower {
 		return in.findInArea(element, middle, bottom)
 	}
 	return in.findInArea(element, top, middle)
 }
 
-//isHigher returns if the first elemet should be higher than the second one
-func (in *Index) isHigher(e1, e2 IndexElement) (bool, error) {
+//isLess returns if the first elemet should be lower than the second one
+func (in *Index) isLess(e1, e2 IndexElement) (bool, error) {
 	less := false
 	for _, l := range in.less {
 		isLess, _ := l(e1, e2)

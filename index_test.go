@@ -251,7 +251,7 @@ func TestAddAndDeleteNewRandomIndexElements(t *testing.T) {
 	count := 100
 	indexElements := make([]IndexElement, count)
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < count; i++ {
 		s1 := rand.NewSource(time.Now().UnixNano())
 		r1 := rand.New(s1)
 		r := r1.Intn(100)
@@ -260,7 +260,8 @@ func TestAddAndDeleteNewRandomIndexElements(t *testing.T) {
 	}
 
 	for _, in := range indexElements {
-		index.Remove(in)
+		err := index.Remove(in)
+		assert.NoError(t, err)
 	}
 	assert.Empty(t, index.Keys())
 }
