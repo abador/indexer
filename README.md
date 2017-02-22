@@ -1,6 +1,7 @@
 #Indexer - simple library for indexing Go objects
 
 Status: **Done** (waiting for feedback)
+
 [![Build Status](https://api.travis-ci.org/abador/indexer.svg?branch=master)](https://travis-ci.org/abador/indexer)
 
 ## Description
